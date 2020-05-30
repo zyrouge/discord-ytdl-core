@@ -13,7 +13,7 @@ interface StreamOptions extends downloadOptions {
   * @param options - YTDL options
   * @param [options.seek] seek - Time in seconds to seek
   * @param [options.encoderArgs] encoderArgs - FFmpeg encoder args
-  * @returns {Stream}
+  * @returns {OpusStream}
   * @example ```js
   * const ytdl = require("discord-ytdl-core");
   * const stream = ytdl("VIDEO_URL", {
@@ -26,7 +26,7 @@ interface StreamOptions extends downloadOptions {
   */
 const StreamManager = (url: any, options: StreamOptions) => {
     if (!url) {
-        throw new Error("No input url provided");
+        throw new Error("no input provided");
     }
     if (typeof url !== "string" || !(url instanceof Readable)) {
         throw new Error(`input must be a string or ReadableStream. Received ${typeof url}!`);
