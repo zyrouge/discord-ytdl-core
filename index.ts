@@ -1,34 +1,35 @@
 import ytdl, { downloadOptions } from "ytdl-core";
+import { Readable } from "stream";
 import prism from "prism-media";
 
-interface CreateOpusStreamOptions extends downloadOptions {
+interface StreamOptions extends downloadOptions {
     seek?: number;
     encoderArgs?: any[];
 };
 
 /**
- * Create an opus stream for your video with provided encoder args
- * @param url - YouTube URL of the video
- * @param options - YTDL options
- * @param [options.seek] seek - Time in seconds to seek
- * @param [options.encoderArgs] encoderArgs - FFmpeg encoder args
- * @returns {Stream}
- * @example ```js
- * const ytdl = require("discord-ytdl-core");
- * const stream = ytdl("VIDEO_URL", {
- *     seek: 3,
- *     encoderArgs: ["-af", "bass=g=10"]
- * });
- * VoiceConnection.play(stream, {
- *     type: "opus"
- * });```
- */
-const createOpusStream = (url: string, options: CreateOpusStreamOptions) => {
+  * Create an opus stream for your video with provided encoder args
+  * @param url - YouTube URL of the video (or ReadableStream)
+  * @param options - YTDL options
+  * @param [options.seek] seek - Time in seconds to seek
+  * @param [options.encoderArgs] encoderArgs - FFmpeg encoder args
+  * @returns {Stream}
+  * @example ```js
+  * const ytdl = require("discord-ytdl-core");
+  * const stream = ytdl("VIDEO_URL", {
+  *     seek: 3,
+  *     encoderArgs: ["-af", "bass=g=10"]
+  * });
+  * VoiceConnection.play(stream, {
+  *     type: "opus"
+  * });```
+  */
+const StreamManager = (url: any, options: StreamOptions) => {
     if (!url) {
         throw new Error("No input url provided");
     }
-    if (typeof url !== "string") {
-        throw new SyntaxError(`input URL must be a string. Received ${typeof url}!`);
+    if (typeof url !== "string" || !(url instanceof Readable)) {
+        throw new Error(`input must be a string or ReadableStream. Received ${typeof url}!`);
     }
 
     let FFmpegArgs: string[] = [
@@ -51,7 +52,7 @@ const createOpusStream = (url: string, options: CreateOpusStreamOptions) => {
         args: FFmpegArgs
     });
 
-    const inputStream = ytdl(url, options);
+    const inputStream = (url instanceof Readable) ? url : ytdl(url, options);
     const output = inputStream.pipe(transcoder);
 
     const opus = new prism.opus.Encoder({
@@ -69,7 +70,7 @@ const createOpusStream = (url: string, options: CreateOpusStreamOptions) => {
     return outputStream;
 };
 
-const DiscordYTDLCore = Object.assign(createOpusStream, ytdl);
+const DiscordYTDLCore = Object.assign(StreamManager, ytdl);
 
 export = DiscordYTDLCore;
 
